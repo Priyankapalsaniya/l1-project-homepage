@@ -40,6 +40,21 @@ const db = mysql.createConnection({
   password: "password",
   database: "newsletter"
 });
+app.use(express.urlencoded({ extended: true }));
+
+app.post("/subscribe", (req, res) => {
+  const email = req.body.email;
+
+  db.query(
+    "INSERT INTO subscribers (email) VALUES (?)",
+    [email],
+    (err) => {
+      if (err) return res.send("Already subscribed");
+      res.send("Subscribed successfully!");
+    }
+  );
+});
+
 
 
 app.get("/", (req, res) => {
