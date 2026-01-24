@@ -19,7 +19,7 @@ app.post("/upload", upload.single("bill"), (req, res) => {
   const file = req.file;
 
   const params = {
-    Bucket: "customer-bills-bucket",
+    Bucket: "customer-bills-terraform",
     Key: file.originalname,
     Body: fs.createReadStream(file.path),
   };
