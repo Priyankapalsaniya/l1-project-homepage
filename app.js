@@ -65,7 +65,7 @@ app.post("/subscribe", (req, res) => {
 
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile(path.resolve("public/index.html"));
 });
 
 app.listen(3000, "0.0.0.0", () => {
