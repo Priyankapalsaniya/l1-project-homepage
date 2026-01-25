@@ -1,21 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Home Page of my website</title>
+  <meta charset="UTF-8" />
+  <title>Home Page of My Website</title>
 </head>
 <body>
-  <h1>Welcome to frontend</h1>
+
+  <h1>Welcome to Homepage</h1>
 
   <h2>Upload Bill</h2>
   <form action="/upload" method="post" enctype="multipart/form-data">
     <input type="file" name="bill" />
+    <br /><br />
     <button type="submit">Upload</button>
   </form>
 
+  <hr />
+
   <h2>Newsletter Signup</h2>
   <form action="/subscribe" method="post">
-    <input type="email" name="email" />
+    <input
+      type="email"
+      name="email"
+      placeholder="Enter your email"
+      required
+    />
+    <br /><br />
     <button type="submit">Subscribe</button>
   </form>
+
 </body>
 </html>
