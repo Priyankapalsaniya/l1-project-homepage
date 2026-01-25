@@ -17,6 +17,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.post("/upload", upload.single("bill"), (req, res) => {
   const file = req.file;
+});
 
  const params = {
   Bucket: "customer-bills-bucket",
