@@ -54,8 +54,7 @@ app.post("/subscribe", (req, res) => {
     (err) => {
       if (err) return res.send("Already subscribed");
       res.send("Subscribed successfully!");
-    }
-  );
+    });
 });
 
 
