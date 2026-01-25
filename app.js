@@ -18,21 +18,23 @@ app.use(express.static(path.join(__dirname, "public")));
 app.post("/upload", upload.single("bill"), (req, res) => {
   const file = req.file;
 
-  const params = {
-    Bucket: "customer-bills-terraform",
-    Key: file.originalname,
-    Body: fs.createReadStream(file.path),
-  };
+ const params = {
+  Bucket: "customer-bills-bucket",
+  Key: `${Date.now()}-${file.originalname}`, // avoids overwrite
+  Body: fs.createReadStream(file.path),
+};
 
-  s3.upload(params, (err) => {
-    if (err) {
-      console.error(err);
-      return res.send("Upload failed");
-    }
-    res.send("Bill uploaded successfully!");
-  });
+s3.upload(params, (err, data) => {
+  if (err) {
+    console.error(err);
+    return res.status(500).send("Upload failed");
+  }
+
+  // optional: delete file from server after upload
+  fs.unlinkSync(file.path);
+
+  res.send("File uploaded successfully");
 });
-
 // RDS connection
 const db = mysql.createConnection({
   host: "RDS-ENDPOINT",
