@@ -26,6 +26,7 @@ app.post("/upload", upload.single("bill"), (req, res) => {
     Bucket: "customer-bills-bucket",
     Key: `${Date.now()}-${file.originalname}`,
     Body: fs.createReadStream(file.path),
+     ContentType: file.mimetype
   };
 
   s3.upload(params, (err, data) => {
