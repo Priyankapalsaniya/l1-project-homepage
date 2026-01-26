@@ -23,7 +23,7 @@ app.post("/upload", upload.single("bill"), (req, res) => {
   }
 
   const params = {
-    Bucket: "customer-bills-bucket",
+    Bucket: "customer-bills1",
     Key: `${Date.now()}-${file.originalname}`,
     Body: fs.createReadStream(file.path),
      ContentType: file.mimetype
