@@ -6,6 +6,16 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
+
+/* 🔴 FIX #1: Body parsers (add BEFORE routes) */
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+/* 🔴 FIX #2: Ensure uploads folder exists */
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
+
 const upload = multer({ dest: "uploads/" });
 
 // AWS config
@@ -26,12 +36,12 @@ app.post("/upload", upload.single("bill"), (req, res) => {
     Bucket: "customer-bills1",
     Key: `${Date.now()}-${file.originalname}`,
     Body: fs.createReadStream(file.path),
-     ContentType: file.mimetype
+    ContentType: file.mimetype
   };
 
   s3.upload(params, (err, data) => {
     if (err) {
-      console.error(err);
+      console.error("S3 Upload Error:", err);
       return res.status(500).send("Upload failed");
     }
 
@@ -42,33 +52,13 @@ app.post("/upload", upload.single("bill"), (req, res) => {
   });
 });
 
-// RDS connection
-const db = mysql.createConnection({
-  host: "RDS-ENDPOINT",
-  user: "admin",
-  password: "password",
-  database: "newsletter"
-});
-app.use(express.urlencoded({ extended: true }));
-
-app.post("/subscribe", (req, res) => {
-  const email = req.body.email;
-
-  db.query(
-    "INSERT INTO subscribers (email) VALUES (?)",
-    [email],
-    (err) => {
-      if (err) return res.send("Already subscribed");
-      res.send("Subscribed successfully!");
-    });
-});
-
-
-
 app.get("/", (req, res) => {
-    res.sendFile(path.resolve("public/index.html"));
+  res.sendFile(path.resolve("public/index.html"));
 });
 
 app.listen(3000, "0.0.0.0", () => {
-  console.log("Server running on port 3000");
+  console.log("🚀 Server running on port 3000");
 });
+
+
+
