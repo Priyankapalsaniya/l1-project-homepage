@@ -61,7 +61,9 @@ app.listen(3000, "0.0.0.0", () => {
 });
 
 require('dotenv').config();
+const express = require('express');
 const mysql = require('mysql');
+const path = require('path');
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
