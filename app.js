@@ -1,3 +1,5 @@
+require("dotenv").config(); // ✅ MUST be first
+
 const mysql = require("mysql");
 const express = require("express");
 const multer = require("multer");
@@ -7,65 +9,25 @@ const path = require("path");
 
 const app = express();
 
-/* 🔴 FIX #1: Body parsers (add BEFORE routes) */
+/* ✅ Body parsers (ONLY ONCE) */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-/* 🔴 FIX #2: Ensure uploads folder exists */
+/* ✅ Static files */
+app.use(express.static(path.join(__dirname, "public")));
+
+/* ✅ Ensure uploads folder exists */
 if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
 }
 
 const upload = multer({ dest: "uploads/" });
 
-// AWS config
+/* ================= AWS S3 ================= */
 AWS.config.update({ region: "us-west-2" });
 const s3 = new AWS.S3();
 
-// serve static files (HTML, CSS)
-app.use(express.static(path.join(__dirname, "public")));
-
-app.post("/upload", upload.single("bill"), (req, res) => {
-  const file = req.file;
-
-  if (!file) {
-    return res.status(400).send("No file uploaded");
-  }
-
-  const params = {
-    Bucket: "customer-bills1",
-    Key: `${Date.now()}-${file.originalname}`,
-    Body: fs.createReadStream(file.path),
-    ContentType: file.mimetype
-  };
-
-  s3.upload(params, (err, data) => {
-    if (err) {
-      console.error("S3 Upload Error:", err);
-      return res.status(500).send("Upload failed");
-    }
-
-    // delete file from EC2 after upload
-    fs.unlinkSync(file.path);
-
-    res.send("File uploaded successfully");
-  });
-});
-
-app.get("/", (req, res) => {
-  res.sendFile(path.resolve("public/index.html"));
-});
-
-app.listen(3000, "0.0.0.0", () => {
-  console.log("🚀 Server running on port 3000");
-});
-
-// Body parsers (must be before routes)
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-// RDS connection
-require('dotenv').config();
+/* ================= RDS CONNECTION ================= */
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -73,19 +35,48 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME
 });
 
-// Connect to RDS
 db.connect(err => {
   if (err) {
-    console.error("DB connection failed:", err);
+    console.error("❌ DB connection failed:", err);
     return;
   }
   console.log("✅ Connected to RDS");
 });
 
+/* ================= ROUTES ================= */
 
-// Subscribe route
+/* Home */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+/* File Upload */
+app.post("/upload", upload.single("bill"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send("❌ No file uploaded");
+  }
+
+  const params = {
+    Bucket: "customer-bills1",
+    Key: `${Date.now()}-${req.file.originalname}`,
+    Body: fs.createReadStream(req.file.path),
+    ContentType: req.file.mimetype
+  };
+
+  s3.upload(params, (err) => {
+    if (err) {
+      console.error("❌ S3 Upload Error:", err);
+      return res.status(500).send("❌ Upload failed");
+    }
+
+    fs.unlinkSync(req.file.path); // delete local file
+    res.send("✅ File uploaded successfully");
+  });
+});
+
+/* Subscribe */
 app.post("/subscribe", (req, res) => {
-  const email = req.body.email;
+  const { email } = req.body;
 
   if (!email) {
     return res.status(400).send("❌ Email is required");
@@ -94,14 +85,17 @@ app.post("/subscribe", (req, res) => {
   db.query(
     "INSERT INTO subscribers (email) VALUES (?)",
     [email],
-    (err, result) => {
+    (err) => {
       if (err) {
-        console.error("DB insert error:", err);
+        console.error("❌ DB insert error:", err);
         return res.status(500).send("❌ Database error");
       }
-
-      console.log("✅ Email saved:", email);
       res.send("✅ Subscription successful");
     }
   );
+});
+
+/* ================= SERVER ================= */
+app.listen(3000, "0.0.0.0", () => {
+  console.log("🚀 Server running on port 3000");
 });
