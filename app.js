@@ -60,11 +60,12 @@ app.listen(3000, "0.0.0.0", () => {
   console.log("🚀 Server running on port 3000");
 });
 
-require('dotenv').config();
-const express = require('express');
-const mysql = require('mysql');
-const path = require('path');
+// Body parsers (must be before routes)
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
+// RDS connection
+require('dotenv').config();
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -72,6 +73,7 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME
 });
 
+// Connect to RDS
 db.connect(err => {
   if (err) {
     console.error("DB connection failed:", err);
@@ -81,4 +83,25 @@ db.connect(err => {
 });
 
 
+// Subscribe route
+app.post("/subscribe", (req, res) => {
+  const email = req.body.email;
 
+  if (!email) {
+    return res.status(400).send("❌ Email is required");
+  }
+
+  db.query(
+    "INSERT INTO subscribers (email) VALUES (?)",
+    [email],
+    (err, result) => {
+      if (err) {
+        console.error("DB insert error:", err);
+        return res.status(500).send("❌ Database error");
+      }
+
+      console.log("✅ Email saved:", email);
+      res.send("✅ Subscription successful");
+    }
+  );
+});
