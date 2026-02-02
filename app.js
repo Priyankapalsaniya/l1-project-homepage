@@ -24,7 +24,7 @@ if (!fs.existsSync("uploads")) {
 const upload = multer({ dest: "uploads/" });
 
 /* ================= AWS S3 ================= */
-AWS.config.update({ region: "us-west-2" });
+AWS.config.update({ region: "us-east-2" });
 const s3 = new AWS.S3();
 
 /* ================= RDS CONNECTION ================= */
